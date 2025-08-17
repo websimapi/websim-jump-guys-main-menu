@@ -106,7 +106,7 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   characterGroup.add(legs);
   const legGeom = new THREE.CapsuleGeometry(0.2, 0.5, 8, 16);
   const footGeom = new THREE.CapsuleGeometry(0.25, 0.2, 8, 16);
-  footGeom.rotateX(Math.PI / 8);
+  footGeom.rotateX(Math.PI / 16);
   
   // Left Leg Group
   legLGroup = new THREE.Group();
@@ -177,8 +177,8 @@ function animate(t = 0) {
 
   // Legs walk animation
   const legSwing = Math.sin(time * 5.0) * 0.4;
-  if (legLGroup) legLGroup.rotation.x = legSwing;
-  if (legRGroup) legRGroup.rotation.x = -legSwing;
+  if (legLGroup) legLGroup.rotation.x = legSwing - 0.2;
+  if (legRGroup) legRGroup.rotation.x = -legSwing - 0.2;
 
   // Subtle continuous spin
   characterGroup.rotation.y += 0.003;
