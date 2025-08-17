@@ -56,16 +56,6 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   dir.position.set(2, 3, 2);
   scene.add(dir);
 
-  // Ground
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(2.2, 60),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.0 })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.01;
-  ground.receiveShadow = false;
-  scene.add(ground);
-
   // Character (simple primitive stack)
   characterGroup = new THREE.Group();
   scene.add(characterGroup);
