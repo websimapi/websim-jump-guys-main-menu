@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BufferGeometryUtils } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 let renderer, scene, camera, rafId, clock;
 let container;
@@ -161,7 +161,7 @@ function createRiggedCharacter() {
   addSkinning(rLegGeom, skeleton, 'r_upper_leg', 'r_lower_leg');
   parts.push({ geom: rLegGeom, mat: materials.pants });
   
-  const finalGeom = BufferGeometryUtils.mergeGeometries(parts.map(p => p.geom));
+  const finalGeom = mergeGeometries(parts.map(p => p.geom));
   const finalMat = parts.map(p => p.mat);
 
   const characterMesh = new THREE.SkinnedMesh(finalGeom, finalMat);
