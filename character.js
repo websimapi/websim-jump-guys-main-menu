@@ -103,31 +103,53 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   }
 
   const eyeRadius = 0.04;
-  const eyeBevelRadius = 0.02;
+  const sphereGeom = new THREE.SphereGeometry(eyeRadius, 8, 8);
 
-  // Left segment
-  const leftPoints = [new THREE.Vector3(-0.16, 0.1, 0), new THREE.Vector3(-0.08, -0.1, 0)];
-  const leftPath = createWPath(leftPoints, faceRadius);
-  const leftGeom = new THREE.TubeGeometry(leftPath, 20, eyeRadius, 6, false);
+  // Define W points
+  const p1 = new THREE.Vector3(-0.16, 0.1, 0);
+  const p2 = new THREE.Vector3(-0.08, -0.1, 0);
+  const p3 = new THREE.Vector3(0, 0.1, 0);
+  const p4 = new THREE.Vector3(0.08, -0.1, 0);
+  const p5 = new THREE.Vector3(0.16, 0.1, 0);
 
-  // Middle segment
-  const midPoints = [new THREE.Vector3(-0.08, -0.1, 0), new THREE.Vector3(0, 0.1, 0), new THREE.Vector3(0.08, -0.1, 0)];
-  const midPath = createWPath(midPoints, faceRadius);
-  const midGeom = new THREE.TubeGeometry(midPath, 20, eyeRadius, 6, false);
+  // Project points onto face
+  [p1, p2, p3, p4, p5].forEach(p => {
+    const R = faceRadius + 0.001;
+    p.z = -R + Math.sqrt(Math.max(0, R * R - p.x * p.x));
+  });
 
-  // Right segment
-  const rightPoints = [new THREE.Vector3(0.08, -0.1, 0), new THREE.Vector3(0.16, 0.1, 0)];
-  const rightPath = createWPath(rightPoints, faceRadius);
-  const rightGeom = new THREE.TubeGeometry(rightPath, 20, eyeRadius, 6, false);
+  // Create tube geometries
+  const leftGeom = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p1, p2]), 20, eyeRadius, 8, false);
+  const midGeom = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p2, p3, p4]), 20, eyeRadius, 8, false);
+  const rightGeom = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p4, p5]), 20, eyeRadius, 8, false);
   
-  const bevelGeom = new THREE.SphereGeometry(eyeRadius + eyeBevelRadius, 6, 6);
-
   function createEye() {
     const eyeGroup = new THREE.Group();
+    
+    // Segments
     const segL = new THREE.Mesh(leftGeom, eyeLeftMat);
     const segM = new THREE.Mesh(midGeom, eyeMidMat);
     const segR = new THREE.Mesh(rightGeom, eyeRightMat);
     eyeGroup.add(segL, segM, segR);
+    
+    // Rounded caps
+    const cap1 = new THREE.Mesh(sphereGeom, eyeLeftMat);
+    cap1.position.copy(p1);
+    
+    const cap2 = new THREE.Mesh(sphereGeom, eyeLeftMat);
+    cap2.position.copy(p2);
+    
+    const cap3 = new THREE.Mesh(sphereGeom, eyeMidMat);
+    cap3.position.copy(p3);
+    
+    const cap4 = new THREE.Mesh(sphereGeom, eyeRightMat);
+    cap4.position.copy(p4);
+
+    const cap5 = new THREE.Mesh(sphereGeom, eyeRightMat);
+    cap5.position.copy(p5);
+    
+    eyeGroup.add(cap1, cap2, cap3, cap4, cap5);
+    
     return eyeGroup;
   }
 
