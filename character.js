@@ -78,6 +78,7 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   characterGroup.add(body);
 
   // Eyes
+  const faceRadius = 0.605; // Slightly larger than body radius to sit on top
   const wPoints = [
     new THREE.Vector3(-0.14, 0.08, 0),
     new THREE.Vector3(-0.07, -0.08, 0),
@@ -85,13 +86,18 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
     new THREE.Vector3(0.07, -0.08, 0),
     new THREE.Vector3(0.14, 0.08, 0)
   ];
+  // Curve the points to match the face
+  wPoints.forEach(p => {
+    p.z = -faceRadius + Math.sqrt(faceRadius * faceRadius - p.x * p.x);
+  });
+  
   const wPath = new THREE.CatmullRomCurve3(wPoints);
   const eyeGeom = new THREE.TubeGeometry(wPath, 20, 0.035, 8, false);
 
   const eyeL = new THREE.Mesh(eyeGeom, accentMat);
   const eyeR = new THREE.Mesh(eyeGeom, accentMat);
-  eyeL.position.set(-0.25, 1.6, 0.55);
-  eyeR.position.set(0.25, 1.6, 0.55);
+  eyeL.position.set(-0.25, 1.6, 0.58);
+  eyeR.position.set(0.25, 1.6, 0.58);
   characterGroup.add(eyeL, eyeR);
 
   // Arms & Hands
