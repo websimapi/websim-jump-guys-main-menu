@@ -51,9 +51,9 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(0, 1.2, 4.2);
 
-  const light = new THREE.HemisphereLight(0xffffff, 0xcccccc, 1.0);
+  const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
   scene.add(light);
-  const dir = new THREE.DirectionalLight(0xffffff, 0.6);
+  const dir = new THREE.DirectionalLight(0xffffff, 1.0);
   dir.position.set(2, 3, 2);
   scene.add(dir);
 
@@ -61,8 +61,16 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   characterGroup = new THREE.Group();
   scene.add(characterGroup);
 
-  const bodyMat = new THREE.MeshToonMaterial({ color: 0xffde3a });
-  const accentMat = new THREE.MeshToonMaterial({ color: 0x111111 });
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0xffde3a,
+    roughness: 0.4,
+    metalness: 0.1,
+  });
+  const accentMat = new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    roughness: 0.2,
+    metalness: 0.0,
+  });
 
   // Body
   body = new THREE.Mesh(new THREE.CapsuleGeometry(0.6, 1.5, 16, 32), bodyMat);
@@ -70,21 +78,9 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   characterGroup.add(body);
 
   // Eyes
-  const eyeLineMaterial = new THREE.LineBasicMaterial({ color: accentMat.color, linewidth: 2 });
-  const w = 0.12;
-  const h = 0.12;
-  const eyePoints = [
-    new THREE.Vector3(-w, h / 2, 0),
-    new THREE.Vector3(-w / 2, -h / 2, 0),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(w / 2, -h / 2, 0),
-    new THREE.Vector3(w, h / 2, 0)
-  ];
-  const eyeGeom = new THREE.BufferGeometry().setFromPoints(eyePoints);
-
-  const eyeL = new THREE.Line(eyeGeom, eyeLineMaterial);
-  const eyeR = new THREE.Line(eyeGeom, eyeLineMaterial);
-
+  const eyeGeom = new THREE.SphereGeometry(0.12, 16, 16);
+  const eyeL = new THREE.Mesh(eyeGeom, accentMat);
+  const eyeR = new THREE.Mesh(eyeGeom, accentMat);
   eyeL.position.set(-0.25, 1.6, 0.5);
   eyeR.position.set(0.25, 1.6, 0.5);
   characterGroup.add(eyeL, eyeR);
@@ -141,7 +137,7 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   legs.add(legRGroup);
 
   // Lighting add-on
-  const rim = new THREE.DirectionalLight(0xffffff, 0.25);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.8);
   rim.position.set(-2, 1, -2);
   scene.add(rim);
 
