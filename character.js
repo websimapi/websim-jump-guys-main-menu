@@ -1,13 +1,15 @@
 import * as THREE from 'three';
+import { BufferGeometryUtils } from 'three/addons/utils/BufferGeometryUtils.js';
 
-let renderer, scene, camera, rafId;
+let renderer, scene, camera, rafId, clock;
 let container;
-let characterGroup;
+let character;
 let mixer; // Animation mixer
 let quality = 'medium';
 
 export function initCharacterStage(canvas, initialQuality = 'medium') {
   container = canvas;
+  clock = new THREE.Clock();
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
 
@@ -58,8 +60,9 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   scene.add(dir);
 
   // Create detailed rigged character
-  characterGroup = createRiggedCharacter();
-  scene.add(characterGroup);
+  character = createRiggedCharacter();
+  character.position.y = -0.8; // Adjust position to stand on the "ground"
+  scene.add(character);
 
   // Lighting add-on
   const rim = new THREE.DirectionalLight(0xffffff, 0.25);
@@ -76,290 +79,184 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
 }
 
 function createRiggedCharacter() {
-  const group = new THREE.Group();
-  
-  // Create skeleton structure with better proportions
   const bones = [];
-  
-  // Root bone
-  const rootBone = new THREE.Bone();
-  rootBone.name = 'root';
-  rootBone.position.set(0, 0, 0);
-  bones.push(rootBone);
-  
-  // Spine bones with better spacing
-  const spineLower = new THREE.Bone();
-  spineLower.name = 'spine_lower';
-  spineLower.position.set(0, 0.8, 0);
-  rootBone.add(spineLower);
-  bones.push(spineLower);
-  
-  const spineUpper = new THREE.Bone();
-  spineUpper.name = 'spine_upper';
-  spineUpper.position.set(0, 0.6, 0);
-  spineLower.add(spineUpper);
-  bones.push(spineUpper);
-  
-  // Head bone
-  const headBone = new THREE.Bone();
-  headBone.name = 'head';
-  headBone.position.set(0, 0.5, 0);
-  spineUpper.add(headBone);
-  bones.push(headBone);
-  
-  // Left arm bones with better positioning
-  const leftShoulder = new THREE.Bone();
-  leftShoulder.name = 'left_shoulder';
-  leftShoulder.position.set(-0.7, 0.3, 0);
-  spineUpper.add(leftShoulder);
-  bones.push(leftShoulder);
-  
-  const leftUpperArm = new THREE.Bone();
-  leftUpperArm.name = 'left_upper_arm';
-  leftUpperArm.position.set(0, -0.4, 0);
-  leftShoulder.add(leftUpperArm);
-  bones.push(leftUpperArm);
-  
-  const leftLowerArm = new THREE.Bone();
-  leftLowerArm.name = 'left_lower_arm';
-  leftLowerArm.position.set(0, -0.5, 0);
-  leftUpperArm.add(leftLowerArm);
-  bones.push(leftLowerArm);
-  
-  // Right arm bones
-  const rightShoulder = new THREE.Bone();
-  rightShoulder.name = 'right_shoulder';
-  rightShoulder.position.set(0.7, 0.3, 0);
-  spineUpper.add(rightShoulder);
-  bones.push(rightShoulder);
-  
-  const rightUpperArm = new THREE.Bone();
-  rightUpperArm.name = 'right_upper_arm';
-  rightUpperArm.position.set(0, -0.4, 0);
-  rightShoulder.add(rightUpperArm);
-  bones.push(rightUpperArm);
-  
-  const rightLowerArm = new THREE.Bone();
-  rightLowerArm.name = 'right_lower_arm';
-  rightLowerArm.position.set(0, -0.5, 0);
-  rightUpperArm.add(rightLowerArm);
-  bones.push(rightLowerArm);
-  
-  // Left leg bones
-  const leftHip = new THREE.Bone();
-  leftHip.name = 'left_hip';
-  leftHip.position.set(-0.3, 0, 0);
-  rootBone.add(leftHip);
-  bones.push(leftHip);
-  
-  const leftUpperLeg = new THREE.Bone();
-  leftUpperLeg.name = 'left_upper_leg';
-  leftUpperLeg.position.set(0, -0.5, 0);
-  leftHip.add(leftUpperLeg);
-  bones.push(leftUpperLeg);
-  
-  const leftLowerLeg = new THREE.Bone();
-  leftLowerLeg.name = 'left_lower_leg';
-  leftLowerLeg.position.set(0, -0.5, 0);
-  leftUpperLeg.add(leftLowerLeg);
-  bones.push(leftLowerLeg);
-  
-  // Right leg bones
-  const rightHip = new THREE.Bone();
-  rightHip.name = 'right_hip';
-  rightHip.position.set(0.3, 0, 0);
-  rootBone.add(rightHip);
-  bones.push(rightHip);
-  
-  const rightUpperLeg = new THREE.Bone();
-  rightUpperLeg.name = 'right_upper_leg';
-  rightUpperLeg.position.set(0, -0.5, 0);
-  rightHip.add(rightUpperLeg);
-  bones.push(rightUpperLeg);
-  
-  const rightLowerLeg = new THREE.Bone();
-  rightLowerLeg.name = 'right_lower_leg';
-  rightLowerLeg.position.set(0, -0.5, 0);
-  rightUpperLeg.add(rightLowerLeg);
-  bones.push(rightLowerLeg);
+  const boneData = [
+    { name: 'root', parent: -1, pos: [0, 0, 0] },
+    { name: 'spine_lower', parent: 0, pos: [0, 0.4, 0] },
+    { name: 'spine_upper', parent: 1, pos: [0, 0.4, 0] },
+    { name: 'neck', parent: 2, pos: [0, 0.4, 0] },
+    { name: 'head', parent: 3, pos: [0, 0.15, 0] },
+    { name: 'l_shoulder', parent: 2, pos: [-0.2, 0.3, 0] },
+    { name: 'l_upper_arm', parent: 5, pos: [-0.3, 0, 0] },
+    { name: 'l_lower_arm', parent: 6, pos: [-0.4, 0, 0] },
+    { name: 'r_shoulder', parent: 2, pos: [0.2, 0.3, 0] },
+    { name: 'r_upper_arm', parent: 8, pos: [0.3, 0, 0] },
+    { name: 'r_lower_arm', parent: 9, pos: [0.4, 0, 0] },
+    { name: 'l_hip', parent: 0, pos: [-0.15, 0, 0] },
+    { name: 'l_upper_leg', parent: 11, pos: [0, -0.4, 0] },
+    { name: 'l_lower_leg', parent: 12, pos: [0, -0.5, 0] },
+    { name: 'r_hip', parent: 0, pos: [0.15, 0, 0] },
+    { name: 'r_upper_leg', parent: 14, pos: [0, -0.4, 0] },
+    { name: 'r_lower_leg', parent: 15, pos: [0, -0.5, 0] },
+  ];
 
-  // Create character parts separately with different materials
+  boneData.forEach(data => {
+    const bone = new THREE.Bone();
+    bone.name = data.name;
+    bone.position.set(...data.pos);
+    bones.push(bone);
+    if (data.parent !== -1) {
+      bones[data.parent].add(bone);
+    }
+  });
+
+  const skeleton = new THREE.Skeleton(bones);
+
   const materials = {
-    head: new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.3, metalness: 0.1 }), // skin tone
-    body: new THREE.MeshStandardMaterial({ color: 0x4a90e2, roughness: 0.4, metalness: 0.0 }), // blue shirt
-    arms: new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.3, metalness: 0.1 }), // skin tone
-    legs: new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.5, metalness: 0.0 }), // dark pants
-    eyes: new THREE.MeshStandardMaterial({ color: 0x000000 })
+    skin: new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.4 }),
+    shirt: new THREE.MeshStandardMaterial({ color: 0x4a90e2, roughness: 0.5 }),
+    pants: new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.6 }),
+    eyes: new THREE.MeshStandardMaterial({ color: 0x111111 }),
   };
 
+  const parts = [];
+  const bodyPos = new THREE.Vector3(0, 0.8, 0);
+
   // Head
-  const headGeom = new THREE.SphereGeometry(0.35, 32, 32);
-  const headMesh = new THREE.SkinnedMesh(headGeom, materials.head);
-  headMesh.position.set(0, 1.85, 0);
-  addSimpleSkinning(headMesh, bones, 'head');
-  group.add(headMesh);
+  const headGeom = new THREE.SphereGeometry(0.3, 32, 24);
+  headGeom.translate(0, 1.35, 0);
+  addSkinning(headGeom, skeleton, 'head');
+  parts.push({ geom: headGeom, mat: materials.skin });
 
   // Eyes
-  const eyeGeom = new THREE.SphereGeometry(0.06, 16, 16);
-  const leftEyeMesh = new THREE.SkinnedMesh(eyeGeom, materials.eyes);
-  leftEyeMesh.position.set(-0.12, 1.9, 0.3);
-  addSimpleSkinning(leftEyeMesh, bones, 'head');
-  group.add(leftEyeMesh);
-
-  const rightEyeMesh = new THREE.SkinnedMesh(eyeGeom, materials.eyes);
-  rightEyeMesh.position.set(0.12, 1.9, 0.3);
-  addSimpleSkinning(rightEyeMesh, bones, 'head');
-  group.add(rightEyeMesh);
-
+  const eyeGeom = new THREE.SphereGeometry(0.05, 12, 8);
+  const lEyeGeom = eyeGeom.clone().translate(-0.1, 1.4, 0.26);
+  addSkinning(lEyeGeom, skeleton, 'head');
+  parts.push({ geom: lEyeGeom, mat: materials.eyes });
+  const rEyeGeom = eyeGeom.clone().translate(0.1, 1.4, 0.26);
+  addSkinning(rEyeGeom, skeleton, 'head');
+  parts.push({ geom: rEyeGeom, mat: materials.eyes });
+  
   // Body
-  const bodyGeom = new THREE.CylinderGeometry(0.4, 0.5, 1.2, 16);
-  const bodyMesh = new THREE.SkinnedMesh(bodyGeom, materials.body);
-  bodyMesh.position.set(0, 1.2, 0);
-  addSimpleSkinning(bodyMesh, bones, 'spine_upper');
-  group.add(bodyMesh);
+  const bodyGeom = new THREE.CylinderGeometry(0.3, 0.35, 0.9, 16);
+  bodyGeom.translate(bodyPos.x, bodyPos.y, bodyPos.z);
+  addSkinning(bodyGeom, skeleton, 'spine_lower', 'spine_upper');
+  parts.push({ geom: bodyGeom, mat: materials.shirt });
 
   // Arms
-  const armGeom = new THREE.CapsuleGeometry(0.1, 0.7, 4, 16);
-  
-  const leftArmMesh = new THREE.SkinnedMesh(armGeom, materials.arms);
-  leftArmMesh.position.set(-0.6, 1.1, 0);
-  addSimpleSkinning(leftArmMesh, bones, 'left_upper_arm');
-  group.add(leftArmMesh);
-
-  const rightArmMesh = new THREE.SkinnedMesh(armGeom, materials.arms);
-  rightArmMesh.position.set(0.6, 1.1, 0);
-  addSimpleSkinning(rightArmMesh, bones, 'right_upper_arm');
-  group.add(rightArmMesh);
-
-  const forearmGeom = new THREE.CapsuleGeometry(0.08, 0.6, 4, 12);
-  
-  const leftForearmMesh = new THREE.SkinnedMesh(forearmGeom, materials.arms);
-  leftForearmMesh.position.set(-0.6, 0.5, 0);
-  addSimpleSkinning(leftForearmMesh, bones, 'left_lower_arm');
-  group.add(leftForearmMesh);
-
-  const rightForearmMesh = new THREE.SkinnedMesh(forearmGeom, materials.arms);
-  rightForearmMesh.position.set(0.6, 0.5, 0);
-  addSimpleSkinning(rightForearmMesh, bones, 'right_lower_arm');
-  group.add(rightForearmMesh);
+  const armGeom = new THREE.CapsuleGeometry(0.1, 0.4, 8, 16);
+  const lArmGeom = armGeom.clone().translate(-0.5, 1.0, 0);
+  addSkinning(lArmGeom, skeleton, 'l_upper_arm', 'l_lower_arm');
+  parts.push({ geom: lArmGeom, mat: materials.skin });
+  const rArmGeom = armGeom.clone().translate(0.5, 1.0, 0);
+  addSkinning(rArmGeom, skeleton, 'r_upper_arm', 'r_lower_arm');
+  parts.push({ geom: rArmGeom, mat: materials.skin });
 
   // Legs
-  const legGeom = new THREE.CapsuleGeometry(0.15, 0.8, 8, 16);
+  const legGeom = new THREE.CapsuleGeometry(0.15, 0.9, 8, 16);
+  const lLegGeom = legGeom.clone().translate(-0.15, 0.0, 0);
+  addSkinning(lLegGeom, skeleton, 'l_upper_leg', 'l_lower_leg');
+  parts.push({ geom: lLegGeom, mat: materials.pants });
+  const rLegGeom = legGeom.clone().translate(0.15, 0.0, 0);
+  addSkinning(rLegGeom, skeleton, 'r_upper_leg', 'r_lower_leg');
+  parts.push({ geom: rLegGeom, mat: materials.pants });
   
-  const leftLegMesh = new THREE.SkinnedMesh(legGeom, materials.legs);
-  leftLegMesh.position.set(-0.25, 0.3, 0);
-  addSimpleSkinning(leftLegMesh, bones, 'left_upper_leg');
-  group.add(leftLegMesh);
+  const finalGeom = BufferGeometryUtils.mergeGeometries(parts.map(p => p.geom));
+  const finalMat = parts.map(p => p.mat);
 
-  const rightLegMesh = new THREE.SkinnedMesh(legGeom, materials.legs);
-  rightLegMesh.position.set(0.25, 0.3, 0);
-  addSimpleSkinning(rightLegMesh, bones, 'right_upper_leg');
-  group.add(rightLegMesh);
+  const characterMesh = new THREE.SkinnedMesh(finalGeom, finalMat);
+  characterMesh.bind(skeleton);
+  
+  mixer = new THREE.AnimationMixer(characterMesh);
+  const idleClip = createIdleAnimation(skeleton.bones);
+  mixer.clipAction(idleClip).play();
 
-  const lowerLegGeom = new THREE.CapsuleGeometry(0.12, 0.7, 6, 12);
-  
-  const leftLowerLegMesh = new THREE.SkinnedMesh(lowerLegGeom, materials.legs);
-  leftLowerLegMesh.position.set(-0.25, -0.4, 0);
-  addSimpleSkinning(leftLowerLegMesh, bones, 'left_lower_leg');
-  group.add(leftLowerLegMesh);
-
-  const rightLowerLegMesh = new THREE.SkinnedMesh(lowerLegGeom, materials.legs);
-  rightLowerLegMesh.position.set(0.25, -0.4, 0);
-  addSimpleSkinning(rightLowerLegMesh, bones, 'right_lower_leg');
-  group.add(rightLowerLegMesh);
-
-  // Add skeleton to group
-  const skeleton = new THREE.Skeleton(bones);
-  group.add(rootBone);
-  
-  // Create animation mixer
-  mixer = new THREE.AnimationMixer(group);
-  
-  // Create improved idle animation
-  const tracks = [];
-  
-  // More pronounced arm swinging
-  const times = [0, 1, 2, 3, 4];
-  
-  // Left shoulder - swinging motion
-  const leftShoulderRotations = [
-    0, 0, 0.3, 0.95,    // forward swing
-    0, 0, 0, 1,         // neutral
-    0, 0, -0.2, 0.98,   // back swing  
-    0, 0, 0, 1,         // neutral
-    0, 0, 0.3, 0.95     // back to start
-  ];
-  
-  tracks.push(new THREE.QuaternionKeyframeTrack(
-    'left_shoulder.quaternion',
-    times,
-    leftShoulderRotations
-  ));
-  
-  // Right shoulder - opposite motion
-  const rightShoulderRotations = [
-    0, 0, -0.2, 0.98,   // back swing
-    0, 0, 0, 1,         // neutral
-    0, 0, 0.3, 0.95,    // forward swing
-    0, 0, 0, 1,         // neutral
-    0, 0, -0.2, 0.98    // back to start
-  ];
-  
-  tracks.push(new THREE.QuaternionKeyframeTrack(
-    'right_shoulder.quaternion',
-    times,
-    rightShoulderRotations
-  ));
-  
-  // Subtle head bobbing
-  const headTimes = [0, 2, 4];
-  const headPositions = [
-    0, 0, 0,
-    0, 0.05, 0,
-    0, 0, 0
-  ];
-  
-  tracks.push(new THREE.VectorKeyframeTrack(
-    'head.position',
-    headTimes,
-    headPositions
-  ));
-  
-  // Create and play animation
-  const idleClip = new THREE.AnimationClip('idle', 4, tracks);
-  const idleAction = mixer.clipAction(idleClip);
-  idleAction.setLoop(THREE.LoopRepeat);
-  idleAction.play();
-  
-  return group;
+  return characterMesh;
 }
 
-// Helper function for simple skinning
-function addSimpleSkinning(mesh, bones, primaryBoneName) {
-  const geometry = mesh.geometry;
-  const position = geometry.attributes.position;
-  
-  const skinIndices = [];
-  const skinWeights = [];
-  
-  const primaryBoneIndex = bones.findIndex(b => b.name === primaryBoneName);
-  
-  for (let i = 0; i < position.count; i++) {
-    skinIndices.push(primaryBoneIndex, 0, 0, 0);
-    skinWeights.push(1, 0, 0, 0);
-  }
-  
-  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
-  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
-  
-  // Bind skeleton
-  const skeleton = new THREE.Skeleton(bones);
-  mesh.bind(skeleton);
+function addSkinning(geometry, skeleton, boneName1, boneName2) {
+    const bone1 = skeleton.getBoneByName(boneName1);
+    const bone2 = boneName2 ? skeleton.getBoneByName(boneName2) : null;
+    const boneIndex1 = skeleton.bones.indexOf(bone1);
+    const boneIndex2 = bone2 ? skeleton.bones.indexOf(bone2) : 0;
+
+    const skinIndices = [];
+    const skinWeights = [];
+    const position = geometry.attributes.position;
+    
+    const worldBone1 = new THREE.Vector3();
+    const worldBone2 = new THREE.Vector3();
+    bone1.getWorldPosition(worldBone1);
+    if (bone2) bone2.getWorldPosition(worldBone2);
+
+    for (let i = 0; i < position.count; i++) {
+        const x = position.getX(i);
+        const y = position.getY(i);
+        const z = position.getZ(i);
+        const vertex = new THREE.Vector3(x, y, z);
+
+        if (!bone2) {
+            skinIndices.push(boneIndex1, 0, 0, 0);
+            skinWeights.push(1, 0, 0, 0);
+        } else {
+            const dist1 = vertex.distanceTo(worldBone1);
+            const dist2 = vertex.distanceTo(worldBone2);
+            const totalDist = dist1 + dist2;
+            let weight1 = 1.0 - (dist1 / totalDist);
+            let weight2 = 1.0 - (dist2 / totalDist);
+            
+            // Sharpen the blend
+            weight1 = Math.pow(weight1, 1.5);
+            weight2 = Math.pow(weight2, 1.5);
+            
+            const totalWeight = weight1 + weight2;
+            weight1 /= totalWeight;
+            weight2 /= totalWeight;
+            
+            skinIndices.push(boneIndex1, boneIndex2, 0, 0);
+            skinWeights.push(weight1, weight2, 0, 0);
+        }
+    }
+    geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+    geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
 }
 
-function createDetailedCharacterGeometry() {
-  // This function is no longer needed as we create parts separately
-  return new THREE.BoxGeometry(1, 1, 1);
+function createIdleAnimation(bones) {
+    const tracks = [];
+    const duration = 4;
+    const times = [0, duration / 2, duration];
+    
+    // Breathing
+    const spineUpper = bones.find(b => b.name === 'spine_upper');
+    const qStart = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.05, 0, 0));
+    const qMid = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05, 0, 0));
+    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[2].quaternion', times, [
+        ...qStart.toArray(), ...qMid.toArray(), ...qStart.toArray()
+    ]));
+
+    // Arm swing
+    const lShoulder = bones.find(b => b.name === 'l_shoulder');
+    const rShoulder = bones.find(b => b.name === 'r_shoulder');
+    const qArmStart = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.2));
+    const qArmMid = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.2));
+    const qArmStartInv = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.2));
+    const qArmMidInv = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.2));
+    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[5].quaternion', times, [
+        ...qArmStart.toArray(), ...qArmMid.toArray(), ...qArmStart.toArray()
+    ]));
+    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[8].quaternion', times, [
+        ...qArmStartInv.toArray(), ...qArmMidInv.toArray(), ...qArmStartInv.toArray()
+    ]));
+    
+    // Head sway
+    const neck = bones.find(b => b.name === 'neck');
+    const qHeadStart = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.1, 0));
+    const qHeadMid = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.1, 0));
+    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[3].quaternion', times, [
+        ...qHeadStart.toArray(), ...qHeadMid.toArray(), ...qHeadStart.toArray()
+    ]));
+    
+    return new THREE.AnimationClip('idle', duration, tracks);
 }
 
 export function setRendererQuality(q) {
@@ -376,24 +273,22 @@ function onResize() {
   camera.updateProjectionMatrix();
 }
 
-function animate(t = 0) {
-  const time = t / 1000;
+function animate() {
+  rafId = requestAnimationFrame(animate);
+  const delta = clock.getDelta();
   
-  // Update animation mixer with proper delta time
   if (mixer) {
-    mixer.update(0.016);
+    mixer.update(delta);
   }
   
-  // Subtle floating motion
+  const time = clock.getElapsedTime();
   const idle = Math.sin(time * 1.2) * 0.02;
-  if (characterGroup) {
-    characterGroup.position.y = idle;
-    // Slower, more subtle rotation
-    characterGroup.rotation.y = time * 0.1;
+  if (character) {
+    character.position.y = -0.8 + idle;
+    character.rotation.y = Math.sin(time * 0.2) * 0.15;
   }
 
   renderer.render(scene, camera);
-  rafId = requestAnimationFrame(animate);
 }
 
 function destroy() {
