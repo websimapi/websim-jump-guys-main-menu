@@ -96,9 +96,11 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
 
   const eyeL = new THREE.Mesh(eyeGeom, accentMat);
   const eyeR = new THREE.Mesh(eyeGeom, accentMat);
-  eyeL.position.set(-0.25, 1.6, 0.58);
-  eyeR.position.set(0.25, 1.6, 0.58);
-  characterGroup.add(eyeL, eyeR);
+  // Position eyes relative to the body's center and parent them to the body
+  // This ensures they move and scale with the body, preventing clipping.
+  eyeL.position.set(-0.25, 0.25, 0.58); // y is now 1.6 (original) - 1.35 (body y)
+  eyeR.position.set(0.25, 0.25, 0.58);
+  body.add(eyeL, eyeR);
 
   // Arms & Hands
   const armsGroup = new THREE.Group();
