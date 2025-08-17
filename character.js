@@ -2,9 +2,9 @@ import * as THREE from 'three';
 
 let renderer, scene, camera, rafId;
 let container;
-let characterGroup;
+let characterGroup, body;
 let quality = 'medium';
-let arms, legs;
+let armL, armR, legs;
 
 export function initCharacterStage(canvas, initialQuality = 'medium') {
   container = canvas;
@@ -65,7 +65,7 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   const accentMat = new THREE.MeshToonMaterial({ color: 0x111111 });
 
   // Body
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.6, 1.5, 16, 32), bodyMat);
+  body = new THREE.Mesh(new THREE.CapsuleGeometry(0.6, 1.5, 16, 32), bodyMat);
   body.position.y = 1.35;
   characterGroup.add(body);
 
@@ -78,16 +78,16 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   characterGroup.add(eyeL, eyeR);
 
   // Arms & Hands
-  arms = new THREE.Group();
-  characterGroup.add(arms);
+  const armsGroup = new THREE.Group();
+  characterGroup.add(armsGroup);
   const armGeom = new THREE.CapsuleGeometry(0.12, 0.6, 8, 16);
-  const armL = new THREE.Mesh(armGeom, bodyMat);
-  const armR = new THREE.Mesh(armGeom, bodyMat);
+  armL = new THREE.Mesh(armGeom, bodyMat);
+  armR = new THREE.Mesh(armGeom, bodyMat);
   armL.position.set(-0.55, 1.3, 0);
   armR.position.set(0.55, 1.3, 0);
   armL.rotation.z = Math.PI / 4;
   armR.rotation.z = -Math.PI / 4;
-  arms.add(armL, armR);
+  armsGroup.add(armL, armR);
 
   const handGeom = new THREE.SphereGeometry(0.18, 16, 16);
   const handL = new THREE.Mesh(handGeom, bodyMat);
@@ -149,12 +149,29 @@ function onResize() {
 
 function animate(t = 0) {
   const time = t / 1000;
-  const idle = Math.sin(time * 2.0) * 0.02;
-  const sway = Math.sin(time * 1.5) * 0.03;
-  characterGroup.position.y = idle;
-  characterGroup.rotation.y += 0.004; // subtle spin
-  if (arms) arms.rotation.z = sway;
-  if (legs) legs.rotation.z = -sway;
+
+  // Gentle bobbing
+  const bob = Math.sin(time * 2.5) * 0.06;
+  characterGroup.position.y = bob;
+
+  // Breathing effect
+  const breath = Math.sin(time * 2.0) * 0.025;
+  if (body) {
+    body.scale.x = 1 + breath;
+    body.scale.z = 1 + breath;
+  }
+
+  // Arm swing
+  const armSwing = Math.sin(time * 2.5) * 0.25;
+  if (armL) armL.rotation.z = Math.PI / 4 + armSwing;
+  if (armR) armR.rotation.z = -Math.PI / 4 - armSwing;
+
+  // Legs sway
+  const legSway = Math.sin(time * 1.5 + Math.PI / 4) * 0.1;
+  if (legs) legs.rotation.z = -legSway;
+
+  // Subtle continuous spin
+  characterGroup.rotation.y += 0.003;
 
   renderer.render(scene, camera);
   rafId = requestAnimationFrame(animate);
