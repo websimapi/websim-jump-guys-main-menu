@@ -8,7 +8,7 @@ let quality = 'medium';
 export function initCharacterStage(canvas, initialQuality = 'medium') {
   container = canvas;
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setClearColor(0x08172b, 1);
+  renderer.setClearColor(0x000000, 0);
 
   scene = new THREE.Scene();
   // add gradient sky background inside the 3D scene
@@ -16,9 +16,9 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   const skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     uniforms: {
-      topColor: { value: new THREE.Color(0x0b1e36) },    // night light blue
+      topColor: { value: new THREE.Color(0x3a73b8) },    // brighter night blue
       midColor: { value: new THREE.Color(0x1f4d86) },    // spotlight-ish
-      bottomColor: { value: new THREE.Color(0x08172b) }  // deep
+      bottomColor: { value: new THREE.Color(0x0b1e36) }  // deep blue
     },
     vertexShader: `
       varying vec3 vWorldPos;
@@ -34,11 +34,13 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
       uniform vec3 midColor;
       uniform vec3 bottomColor;
       void main() {
-        // map world Y to 0..1 range across the big sphere
-        float t = clamp((vWorldPos.y + 10.0) / 20.0, 0.0, 1.0);
-        // bias to create a soft "oval spotlight" feel near the top
-        float mid = smoothstep(0.3, 0.9, t);
-        vec3 c = mix(bottomColor, mix(midColor, topColor, mid), t);
+        vec3 p = normalize(vWorldPos);
+        float y = clamp(p.y * 0.5 + 0.5, 0.0, 1.0);
+        float r = length(p.xz);
+        float spotlight = smoothstep(0.8, 0.2, r + (0.65 - y)); // oval spotlight toward top
+        float t = smoothstep(0.0, 1.0, pow(y, 0.85));
+        vec3 c = mix(bottomColor, mix(midColor, topColor, t), t);
+        c = mix(c, midColor, spotlight * 0.55);
         gl_FragColor = vec4(c, 1.0);
       }
     `
