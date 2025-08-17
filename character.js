@@ -78,7 +78,16 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   characterGroup.add(body);
 
   // Eyes
-  const eyeGeom = new THREE.SphereGeometry(0.12, 16, 16);
+  const wPoints = [
+    new THREE.Vector3(-0.14, 0.08, 0),
+    new THREE.Vector3(-0.07, -0.08, 0),
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0.07, -0.08, 0),
+    new THREE.Vector3(0.14, 0.08, 0)
+  ];
+  const wPath = new THREE.CatmullRomCurve3(wPoints);
+  const eyeGeom = new THREE.TubeGeometry(wPath, 20, 0.035, 8, false);
+
   const eyeL = new THREE.Mesh(eyeGeom, accentMat);
   const eyeR = new THREE.Mesh(eyeGeom, accentMat);
   eyeL.position.set(-0.25, 1.6, 0.5);
