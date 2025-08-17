@@ -70,9 +70,21 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   characterGroup.add(body);
 
   // Eyes
-  const eyeGeom = new THREE.SphereGeometry(0.12, 16, 16);
-  const eyeL = new THREE.Mesh(eyeGeom, accentMat);
-  const eyeR = new THREE.Mesh(eyeGeom, accentMat);
+  const eyeLineMaterial = new THREE.LineBasicMaterial({ color: accentMat.color, linewidth: 2 });
+  const w = 0.12;
+  const h = 0.12;
+  const eyePoints = [
+    new THREE.Vector3(-w, h / 2, 0),
+    new THREE.Vector3(-w / 2, -h / 2, 0),
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(w / 2, -h / 2, 0),
+    new THREE.Vector3(w, h / 2, 0)
+  ];
+  const eyeGeom = new THREE.BufferGeometry().setFromPoints(eyePoints);
+
+  const eyeL = new THREE.Line(eyeGeom, eyeLineMaterial);
+  const eyeR = new THREE.Line(eyeGeom, eyeLineMaterial);
+
   eyeL.position.set(-0.25, 1.6, 0.5);
   eyeR.position.set(0.25, 1.6, 0.5);
   characterGroup.add(eyeL, eyeR);
