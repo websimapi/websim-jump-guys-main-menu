@@ -70,20 +70,50 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   });
 
   // W Brand materials for eyes
-  const eyeLeftMat = new THREE.MeshStandardMaterial({
-    color: 0xF9E88B, // Left segment: #F9E88B
-    roughness: 0.3,
-    metalness: 0.0,
-  });
-  const eyeMidMat = new THREE.MeshStandardMaterial({
-    color: 0x4AD0F6, // Middle segment: #4AD0F6
-    roughness: 0.3,
-    metalness: 0.0,
-  });
-  const eyeRightMat = new THREE.MeshStandardMaterial({
-    color: 0xF6A8D9, // Right segment: #F6A8D9
-    roughness: 0.3,
-    metalness: 0.0,
+  const eyeColors = {
+    c1: new THREE.Color(0xF9E88B), // Left segment: #F9E88B
+    c2: new THREE.Color(0x4AD0F6), // Middle segment: #4AD0F6
+    c3: new THREE.Color(0xF6A8D9)  // Right segment: #F6A8D9
+  };
+
+  const gradientEyeMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      c1: { value: eyeColors.c1 },
+      c2: { value: eyeColors.c2 },
+      c3: { value: eyeColors.c3 },
+      gradientWidth: { value: 0.25 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform vec3 c1;
+      uniform vec3 c2;
+      uniform vec3 c3;
+      uniform float gradientWidth;
+
+      void main() {
+        float u = vUv.x;
+        vec3 color = c1;
+
+        // Transition from c1 to c2
+        float stop1 = 0.25;
+        float t1 = smoothstep(stop1 - gradientWidth, stop1 + gradientWidth, u);
+        color = mix(color, c2, t1);
+
+        // Transition from c2 to c3
+        float stop2 = 0.75;
+        float t2 = smoothstep(stop2 - gradientWidth, stop2 + gradientWidth, u);
+        color = mix(color, c3, t2);
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `
   });
 
   // Body
