@@ -84,21 +84,24 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
       gradientWidth: { value: 0.25 }
     },
     vertexShader: `
-      varying vec2 vUv;
+      varying vec3 vLocalPos;
       void main() {
-        vUv = uv;
+        vLocalPos = position;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
-      varying vec2 vUv;
+      varying vec3 vLocalPos;
       uniform vec3 c1;
       uniform vec3 c2;
       uniform vec3 c3;
       uniform float gradientWidth;
 
       void main() {
-        float u = vUv.x;
+        // Use local x-position to create a gradient across the whole 'W' object.
+        // The 'W' geometry spans from x = -0.2 to 0.2 in local space.
+        // We map this range to [0, 1] to use for the gradient.
+        float u = (vLocalPos.x + 0.2) / 0.4;
         vec3 color = c1;
 
         // Transition from c1 to c2
