@@ -11,6 +11,39 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   renderer.setClearColor(0xf5f5f5, 1);
 
   scene = new THREE.Scene();
+  // add gradient sky background inside the 3D scene
+  const skyGeo = new THREE.SphereGeometry(50, 64, 64);
+  const skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: {
+      topColor: { value: new THREE.Color(0x0b1e36) },    // night light blue
+      midColor: { value: new THREE.Color(0x1f4d86) },    // spotlight-ish
+      bottomColor: { value: new THREE.Color(0x08172b) }  // deep
+    },
+    vertexShader: `
+      varying vec3 vWorldPos;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vWorldPos;
+      uniform vec3 topColor;
+      uniform vec3 midColor;
+      uniform vec3 bottomColor;
+      void main() {
+        // map world Y to 0..1 range across the big sphere
+        float t = clamp((vWorldPos.y + 10.0) / 20.0, 0.0, 1.0);
+        // bias to create a soft "oval spotlight" feel near the top
+        float mid = smoothstep(0.3, 0.9, t);
+        vec3 c = mix(bottomColor, mix(midColor, topColor, mid), t);
+        gl_FragColor = vec4(c, 1.0);
+      }
+    `
+  });
+  scene.add(new THREE.Mesh(skyGeo, skyMat));
 
   camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
   camera.position.set(0, 1.2, 3.2);
@@ -115,4 +148,3 @@ function destroy() {
   window.removeEventListener('resize', onResize);
   renderer.dispose();
 }
-
