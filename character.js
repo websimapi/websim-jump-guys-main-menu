@@ -47,8 +47,8 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   });
   scene.add(new THREE.Mesh(skyGeo, skyMat));
 
-  camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-  camera.position.set(0, 1.2, 3.2);
+  camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  camera.position.set(0, 1.2, 4.2);
 
   const light = new THREE.HemisphereLight(0xffffff, 0xcccccc, 1.0);
   scene.add(light);
