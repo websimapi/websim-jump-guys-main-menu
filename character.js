@@ -156,26 +156,31 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   function createEye() {
     const eyeGroup = new THREE.Group();
     
+    // The gradient material is intended for the whole eye.
+    // The previous individual materials (eyeLeftMat, etc.) were removed, causing an error.
+    // We will use the gradientEyeMaterial for all parts.
+    const eyeMat = gradientEyeMaterial || bodyMat; // Fallback to bodyMat if gradient material fails
+
     // Segments
-    const segL = new THREE.Mesh(leftGeom, eyeLeftMat);
-    const segM = new THREE.Mesh(midGeom, eyeMidMat);
-    const segR = new THREE.Mesh(rightGeom, eyeRightMat);
+    const segL = new THREE.Mesh(leftGeom, eyeMat);
+    const segM = new THREE.Mesh(midGeom, eyeMat);
+    const segR = new THREE.Mesh(rightGeom, eyeMat);
     eyeGroup.add(segL, segM, segR);
     
     // Rounded caps
-    const cap1 = new THREE.Mesh(sphereGeom, eyeLeftMat);
+    const cap1 = new THREE.Mesh(sphereGeom, eyeMat);
     cap1.position.copy(p1);
     
-    const cap2 = new THREE.Mesh(sphereGeom, eyeLeftMat);
+    const cap2 = new THREE.Mesh(sphereGeom, eyeMat);
     cap2.position.copy(p2);
     
-    const cap3 = new THREE.Mesh(sphereGeom, eyeMidMat);
+    const cap3 = new THREE.Mesh(sphereGeom, eyeMat);
     cap3.position.copy(p3);
     
-    const cap4 = new THREE.Mesh(sphereGeom, eyeRightMat);
+    const cap4 = new THREE.Mesh(sphereGeom, eyeMat);
     cap4.position.copy(p4);
 
-    const cap5 = new THREE.Mesh(sphereGeom, eyeRightMat);
+    const cap5 = new THREE.Mesh(sphereGeom, eyeMat);
     cap5.position.copy(p5);
     
     eyeGroup.add(cap1, cap2, cap3, cap4, cap5);
