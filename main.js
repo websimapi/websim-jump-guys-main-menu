@@ -105,4 +105,3 @@ function applySettingsUI(s) {
   els.sfxToggle.checked = s.sfx;
   els.qualityTabs.forEach(b => b.classList.toggle('active', b.dataset.q === s.quality));
 }
-
