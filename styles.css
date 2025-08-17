@@ -39,6 +39,7 @@ body {
   border-radius: 14px;
   padding: 8px 10px;
   cursor: pointer;
+  z-index: 5;
 }
 .pfp img {
   width: 36px; height: 36px; border-radius: 50%;
@@ -64,6 +65,7 @@ body {
   position: absolute;
   top: max(12px, env(safe-area-inset-top));
   right: max(12px, env(safe-area-inset-right));
+  z-index: 5;
 }
 
 /* Center stage */
@@ -74,6 +76,7 @@ body {
   place-items: center;
   padding: 0;
   pointer-events: none;
+  z-index: 0;
 }
 .stage canvas {
   position: absolute;
@@ -102,6 +105,7 @@ body {
   cursor: pointer;
   transform: translateZ(0);
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 160ms ease;
+  z-index: 5;
 }
 .play-btn:active { transform: scale(0.98); box-shadow: 0 6px 14px rgba(0,0,0,0.18); }
 

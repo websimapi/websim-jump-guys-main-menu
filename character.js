@@ -8,7 +8,7 @@ let quality = 'medium';
 export function initCharacterStage(canvas, initialQuality = 'medium') {
   container = canvas;
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setClearColor(0xf5f5f5, 1);
+  renderer.setClearColor(0x08172b, 1);
 
   scene = new THREE.Scene();
   // add gradient sky background inside the 3D scene
