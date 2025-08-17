@@ -90,8 +90,8 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
 
   const eyeL = new THREE.Mesh(eyeGeom, accentMat);
   const eyeR = new THREE.Mesh(eyeGeom, accentMat);
-  eyeL.position.set(-0.25, 1.6, 0.5);
-  eyeR.position.set(0.25, 1.6, 0.5);
+  eyeL.position.set(-0.25, 1.6, 0.55);
+  eyeR.position.set(0.25, 1.6, 0.55);
   characterGroup.add(eyeL, eyeR);
 
   // Arms & Hands
