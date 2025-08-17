@@ -143,7 +143,7 @@ function createRiggedCharacter() {
   rightLowerArm.name = 'right_lower_arm';
   rightLowerArm.position.set(0, -0.5, 0);
   rightUpperArm.add(rightLowerArm);
-  bones.push(rightLowerLeg);
+  bones.push(rightLowerArm);
   
   // Left leg bones
   const leftHip = new THREE.Bone();
