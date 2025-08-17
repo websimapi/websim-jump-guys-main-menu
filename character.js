@@ -10,6 +10,8 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   container = canvas;
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.NoToneMapping;
 
   scene = new THREE.Scene();
   // add gradient sky background inside the 3D scene
@@ -66,9 +68,21 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
     roughness: 0.4,
     metalness: 0.1,
   });
-  const accentMat = new THREE.MeshStandardMaterial({
-    color: 0x111111,
-    roughness: 0.2,
+
+  // W Brand materials for eyes
+  const eyeLeftMat = new THREE.MeshStandardMaterial({
+    color: 0xF9E88B, // Left segment: #F9E88B
+    roughness: 0.3,
+    metalness: 0.0,
+  });
+  const eyeMidMat = new THREE.MeshStandardMaterial({
+    color: 0x4AD0F6, // Middle segment: #4AD0F6
+    roughness: 0.3,
+    metalness: 0.0,
+  });
+  const eyeRightMat = new THREE.MeshStandardMaterial({
+    color: 0xF6A8D9, // Right segment: #F6A8D9
+    roughness: 0.3,
     metalness: 0.0,
   });
 
@@ -77,28 +91,50 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   body.position.y = 1.35;
   characterGroup.add(body);
 
-  // Eyes
+  // Eyes (W-logo style)
   const faceRadius = 0.605; // Slightly larger than body radius to sit on top
-  const wPoints = [
-    new THREE.Vector3(-0.14, 0.08, 0),
-    new THREE.Vector3(-0.07, -0.08, 0),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0.07, -0.08, 0),
-    new THREE.Vector3(0.14, 0.08, 0)
-  ];
-  // Curve the points to match the face
-  wPoints.forEach(p => {
-    p.z = -faceRadius + Math.sqrt(faceRadius * faceRadius - p.x * p.x);
-  });
-  
-  const wPath = new THREE.CatmullRomCurve3(wPoints);
-  const eyeGeom = new THREE.TubeGeometry(wPath, 20, 0.035, 8, false);
 
-  const eyeL = new THREE.Mesh(eyeGeom, accentMat);
-  const eyeR = new THREE.Mesh(eyeGeom, accentMat);
-  // Position eyes relative to the body's center and parent them to the body
-  // This ensures they move and scale with the body, preventing clipping.
-  eyeL.position.set(-0.25, 0.25, 0.58); // y is now 1.6 (original) - 1.35 (body y)
+  function createWPath(points, radius) {
+    points.forEach(p => {
+      const R = radius + 0.001; // Ensure it's on the surface
+      p.z = -R + Math.sqrt(Math.max(0, R * R - p.x * p.x));
+    });
+    return new THREE.CatmullRomCurve3(points);
+  }
+
+  const eyeRadius = 0.04;
+  const eyeBevelRadius = 0.02;
+
+  // Left segment
+  const leftPoints = [new THREE.Vector3(-0.16, 0.1, 0), new THREE.Vector3(-0.08, -0.1, 0)];
+  const leftPath = createWPath(leftPoints, faceRadius);
+  const leftGeom = new THREE.TubeGeometry(leftPath, 20, eyeRadius, 6, false);
+
+  // Middle segment
+  const midPoints = [new THREE.Vector3(-0.08, -0.1, 0), new THREE.Vector3(0, 0.1, 0), new THREE.Vector3(0.08, -0.1, 0)];
+  const midPath = createWPath(midPoints, faceRadius);
+  const midGeom = new THREE.TubeGeometry(midPath, 20, eyeRadius, 6, false);
+
+  // Right segment
+  const rightPoints = [new THREE.Vector3(0.08, -0.1, 0), new THREE.Vector3(0.16, 0.1, 0)];
+  const rightPath = createWPath(rightPoints, faceRadius);
+  const rightGeom = new THREE.TubeGeometry(rightPath, 20, eyeRadius, 6, false);
+  
+  const bevelGeom = new THREE.SphereGeometry(eyeRadius + eyeBevelRadius, 6, 6);
+
+  function createEye() {
+    const eyeGroup = new THREE.Group();
+    const segL = new THREE.Mesh(leftGeom, eyeLeftMat);
+    const segM = new THREE.Mesh(midGeom, eyeMidMat);
+    const segR = new THREE.Mesh(rightGeom, eyeRightMat);
+    eyeGroup.add(segL, segM, segR);
+    return eyeGroup;
+  }
+
+  const eyeL = createEye();
+  const eyeR = createEye();
+  
+  eyeL.position.set(-0.25, 0.25, 0.58);
   eyeR.position.set(0.25, 0.25, 0.58);
   body.add(eyeL, eyeR);
 
