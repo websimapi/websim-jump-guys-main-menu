@@ -92,9 +92,14 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   const handGeom = new THREE.SphereGeometry(0.18, 16, 16);
   const handL = new THREE.Mesh(handGeom, bodyMat);
   const handR = new THREE.Mesh(handGeom, bodyMat);
-  handL.position.set(-0.8, 1.0, 0);
-  handR.position.set(0.8, 1.0, 0);
-  arms.add(handL, handR);
+  
+  // Position hands at the end of the arms by parenting them
+  // The capsule's total length is its height + 2 * radius. Half of that is the distance from center to tip.
+  const armHalfLength = armGeom.parameters.height / 2 + armGeom.parameters.radius;
+  handL.position.y = -armHalfLength;
+  handR.position.y = -armHalfLength;
+  armL.add(handL);
+  armR.add(handR);
 
   // Legs & Feet
   legs = new THREE.Group();
