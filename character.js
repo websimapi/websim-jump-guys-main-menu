@@ -1,15 +1,13 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-let renderer, scene, camera, rafId, clock;
+let renderer, scene, camera, rafId;
 let container;
-let character;
-let mixer; // Animation mixer
+let characterGroup;
 let quality = 'medium';
+let arms, legs;
 
 export function initCharacterStage(canvas, initialQuality = 'medium') {
   container = canvas;
-  clock = new THREE.Clock();
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
 
@@ -59,10 +57,61 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   dir.position.set(2, 3, 2);
   scene.add(dir);
 
-  // Create detailed rigged character
-  character = createRiggedCharacter();
-  character.position.y = -0.8; // Adjust position to stand on the "ground"
-  scene.add(character);
+  // Character (bean-like)
+  characterGroup = new THREE.Group();
+  scene.add(characterGroup);
+
+  const bodyMat = new THREE.MeshToonMaterial({ color: 0xffde3a });
+  const accentMat = new THREE.MeshToonMaterial({ color: 0x111111 });
+
+  // Body
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.6, 1.5, 8, 20), bodyMat);
+  body.position.y = 1.35;
+  characterGroup.add(body);
+
+  // Eyes
+  const eyeGeom = new THREE.SphereGeometry(0.1, 16, 16);
+  const eyeL = new THREE.Mesh(eyeGeom, accentMat);
+  const eyeR = new THREE.Mesh(eyeGeom, accentMat);
+  eyeL.position.set(-0.22, 1.6, 0.52);
+  eyeR.position.set(0.22, 1.6, 0.52);
+  characterGroup.add(eyeL, eyeR);
+
+  // Arms & Hands
+  arms = new THREE.Group();
+  characterGroup.add(arms);
+  const armGeom = new THREE.CapsuleGeometry(0.1, 0.5, 6, 10);
+  const armL = new THREE.Mesh(armGeom, bodyMat);
+  const armR = new THREE.Mesh(armGeom, bodyMat);
+  armL.position.set(-0.65, 1.3, 0);
+  armR.position.set(0.65, 1.3, 0);
+  armL.rotation.z = Math.PI / 4;
+  armR.rotation.z = -Math.PI / 4;
+  arms.add(armL, armR);
+
+  const handGeom = new THREE.SphereGeometry(0.15, 12, 12);
+  const handL = new THREE.Mesh(handGeom, bodyMat);
+  const handR = new THREE.Mesh(handGeom, bodyMat);
+  handL.position.set(-0.85, 1.05, 0);
+  handR.position.set(0.85, 1.05, 0);
+  arms.add(handL, handR);
+
+  // Legs & Feet
+  legs = new THREE.Group();
+  characterGroup.add(legs);
+  const legGeom = new THREE.CapsuleGeometry(0.2, 0.4, 6, 10);
+  const legL = new THREE.Mesh(legGeom, bodyMat);
+  const legR = new THREE.Mesh(legGeom, bodyMat);
+  legL.position.set(-0.25, 0.45, 0);
+  legR.position.set(0.25, 0.45, 0);
+  legs.add(legL, legR);
+  
+  const footGeom = new THREE.CapsuleGeometry(0.25, 0.3, 6, 10);
+  const footL = new THREE.Mesh(footGeom, bodyMat);
+  const footR = new THREE.Mesh(footGeom, bodyMat);
+  footL.position.set(-0.25, 0.2, 0.05);
+  footR.position.set(0.25, 0.2, 0.05);
+  legs.add(footL, footR);
 
   // Lighting add-on
   const rim = new THREE.DirectionalLight(0xffffff, 0.25);
@@ -76,187 +125,6 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   animate();
 
   return { setQuality: setRendererQuality, destroy };
-}
-
-function createRiggedCharacter() {
-  const bones = [];
-  const boneData = [
-    { name: 'root', parent: -1, pos: [0, 0, 0] },
-    { name: 'spine_lower', parent: 0, pos: [0, 0.4, 0] },
-    { name: 'spine_upper', parent: 1, pos: [0, 0.4, 0] },
-    { name: 'neck', parent: 2, pos: [0, 0.4, 0] },
-    { name: 'head', parent: 3, pos: [0, 0.15, 0] },
-    { name: 'l_shoulder', parent: 2, pos: [-0.2, 0.3, 0] },
-    { name: 'l_upper_arm', parent: 5, pos: [-0.3, 0, 0] },
-    { name: 'l_lower_arm', parent: 6, pos: [-0.4, 0, 0] },
-    { name: 'r_shoulder', parent: 2, pos: [0.2, 0.3, 0] },
-    { name: 'r_upper_arm', parent: 8, pos: [0.3, 0, 0] },
-    { name: 'r_lower_arm', parent: 9, pos: [0.4, 0, 0] },
-    { name: 'l_hip', parent: 0, pos: [-0.15, 0, 0] },
-    { name: 'l_upper_leg', parent: 11, pos: [0, -0.4, 0] },
-    { name: 'l_lower_leg', parent: 12, pos: [0, -0.5, 0] },
-    { name: 'r_hip', parent: 0, pos: [0.15, 0, 0] },
-    { name: 'r_upper_leg', parent: 14, pos: [0, -0.4, 0] },
-    { name: 'r_lower_leg', parent: 15, pos: [0, -0.5, 0] },
-  ];
-
-  boneData.forEach(data => {
-    const bone = new THREE.Bone();
-    bone.name = data.name;
-    bone.position.set(...data.pos);
-    bones.push(bone);
-    if (data.parent !== -1) {
-      bones[data.parent].add(bone);
-    }
-  });
-
-  const skeleton = new THREE.Skeleton(bones);
-
-  const materials = {
-    skin: new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.4 }),
-    shirt: new THREE.MeshStandardMaterial({ color: 0x4a90e2, roughness: 0.5 }),
-    pants: new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.6 }),
-    eyes: new THREE.MeshStandardMaterial({ color: 0x111111 }),
-  };
-
-  const parts = [];
-  const bodyPos = new THREE.Vector3(0, 0.8, 0);
-
-  // Head
-  const headGeom = new THREE.SphereGeometry(0.3, 32, 24);
-  headGeom.translate(0, 1.35, 0);
-  addSkinning(headGeom, skeleton, 'head');
-  parts.push({ geom: headGeom, mat: materials.skin });
-
-  // Eyes
-  const eyeGeom = new THREE.SphereGeometry(0.05, 12, 8);
-  const lEyeGeom = eyeGeom.clone().translate(-0.1, 1.4, 0.26);
-  addSkinning(lEyeGeom, skeleton, 'head');
-  parts.push({ geom: lEyeGeom, mat: materials.eyes });
-  const rEyeGeom = eyeGeom.clone().translate(0.1, 1.4, 0.26);
-  addSkinning(rEyeGeom, skeleton, 'head');
-  parts.push({ geom: rEyeGeom, mat: materials.eyes });
-  
-  // Body
-  const bodyGeom = new THREE.CylinderGeometry(0.3, 0.35, 0.9, 16);
-  bodyGeom.translate(bodyPos.x, bodyPos.y, bodyPos.z);
-  addSkinning(bodyGeom, skeleton, 'spine_lower', 'spine_upper');
-  parts.push({ geom: bodyGeom, mat: materials.shirt });
-
-  // Arms
-  const armGeom = new THREE.CapsuleGeometry(0.1, 0.4, 8, 16);
-  const lArmGeom = armGeom.clone().translate(-0.5, 1.0, 0);
-  addSkinning(lArmGeom, skeleton, 'l_upper_arm', 'l_lower_arm');
-  parts.push({ geom: lArmGeom, mat: materials.skin });
-  const rArmGeom = armGeom.clone().translate(0.5, 1.0, 0);
-  addSkinning(rArmGeom, skeleton, 'r_upper_arm', 'r_lower_arm');
-  parts.push({ geom: rArmGeom, mat: materials.skin });
-
-  // Legs
-  const legGeom = new THREE.CapsuleGeometry(0.15, 0.9, 8, 16);
-  const lLegGeom = legGeom.clone().translate(-0.15, 0.0, 0);
-  addSkinning(lLegGeom, skeleton, 'l_upper_leg', 'l_lower_leg');
-  parts.push({ geom: lLegGeom, mat: materials.pants });
-  const rLegGeom = legGeom.clone().translate(0.15, 0.0, 0);
-  addSkinning(rLegGeom, skeleton, 'r_upper_leg', 'r_lower_leg');
-  parts.push({ geom: rLegGeom, mat: materials.pants });
-  
-  const finalGeom = mergeGeometries(parts.map(p => p.geom));
-  const finalMat = parts.map(p => p.mat);
-
-  const characterMesh = new THREE.SkinnedMesh(finalGeom, finalMat);
-  characterMesh.bind(skeleton);
-  
-  mixer = new THREE.AnimationMixer(characterMesh);
-  const idleClip = createIdleAnimation(skeleton.bones);
-  mixer.clipAction(idleClip).play();
-
-  return characterMesh;
-}
-
-function addSkinning(geometry, skeleton, boneName1, boneName2) {
-    const bone1 = skeleton.getBoneByName(boneName1);
-    const bone2 = boneName2 ? skeleton.getBoneByName(boneName2) : null;
-    const boneIndex1 = skeleton.bones.indexOf(bone1);
-    const boneIndex2 = bone2 ? skeleton.bones.indexOf(bone2) : 0;
-
-    const skinIndices = [];
-    const skinWeights = [];
-    const position = geometry.attributes.position;
-    
-    const worldBone1 = new THREE.Vector3();
-    const worldBone2 = new THREE.Vector3();
-    bone1.getWorldPosition(worldBone1);
-    if (bone2) bone2.getWorldPosition(worldBone2);
-
-    for (let i = 0; i < position.count; i++) {
-        const x = position.getX(i);
-        const y = position.getY(i);
-        const z = position.getZ(i);
-        const vertex = new THREE.Vector3(x, y, z);
-
-        if (!bone2) {
-            skinIndices.push(boneIndex1, 0, 0, 0);
-            skinWeights.push(1, 0, 0, 0);
-        } else {
-            const dist1 = vertex.distanceTo(worldBone1);
-            const dist2 = vertex.distanceTo(worldBone2);
-            const totalDist = dist1 + dist2;
-            let weight1 = 1.0 - (dist1 / totalDist);
-            let weight2 = 1.0 - (dist2 / totalDist);
-            
-            // Sharpen the blend
-            weight1 = Math.pow(weight1, 1.5);
-            weight2 = Math.pow(weight2, 1.5);
-            
-            const totalWeight = weight1 + weight2;
-            weight1 /= totalWeight;
-            weight2 /= totalWeight;
-            
-            skinIndices.push(boneIndex1, boneIndex2, 0, 0);
-            skinWeights.push(weight1, weight2, 0, 0);
-        }
-    }
-    geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
-    geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
-}
-
-function createIdleAnimation(bones) {
-    const tracks = [];
-    const duration = 4;
-    const times = [0, duration / 2, duration];
-    
-    // Breathing
-    const spineUpper = bones.find(b => b.name === 'spine_upper');
-    const qStart = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.05, 0, 0));
-    const qMid = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05, 0, 0));
-    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[2].quaternion', times, [
-        ...qStart.toArray(), ...qMid.toArray(), ...qStart.toArray()
-    ]));
-
-    // Arm swing
-    const lShoulder = bones.find(b => b.name === 'l_shoulder');
-    const rShoulder = bones.find(b => b.name === 'r_shoulder');
-    const qArmStart = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.2));
-    const qArmMid = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.2));
-    const qArmStartInv = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.2));
-    const qArmMidInv = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.2));
-    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[5].quaternion', times, [
-        ...qArmStart.toArray(), ...qArmMid.toArray(), ...qArmStart.toArray()
-    ]));
-    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[8].quaternion', times, [
-        ...qArmStartInv.toArray(), ...qArmMidInv.toArray(), ...qArmStartInv.toArray()
-    ]));
-    
-    // Head sway
-    const neck = bones.find(b => b.name === 'neck');
-    const qHeadStart = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.1, 0));
-    const qHeadMid = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.1, 0));
-    tracks.push(new THREE.QuaternionKeyframeTrack('.bones[3].quaternion', times, [
-        ...qHeadStart.toArray(), ...qHeadMid.toArray(), ...qHeadStart.toArray()
-    ]));
-    
-    return new THREE.AnimationClip('idle', duration, tracks);
 }
 
 export function setRendererQuality(q) {
@@ -273,22 +141,17 @@ function onResize() {
   camera.updateProjectionMatrix();
 }
 
-function animate() {
-  rafId = requestAnimationFrame(animate);
-  const delta = clock.getDelta();
-  
-  if (mixer) {
-    mixer.update(delta);
-  }
-  
-  const time = clock.getElapsedTime();
-  const idle = Math.sin(time * 1.2) * 0.02;
-  if (character) {
-    character.position.y = -0.8 + idle;
-    character.rotation.y = Math.sin(time * 0.2) * 0.15;
-  }
+function animate(t = 0) {
+  const time = t / 1000;
+  const idle = Math.sin(time * 2.0) * 0.02;
+  const sway = Math.sin(time * 1.5) * 0.03;
+  characterGroup.position.y = idle;
+  characterGroup.rotation.y += 0.004; // subtle spin
+  if (arms) arms.rotation.z = sway;
+  if (legs) legs.rotation.z = -sway;
 
   renderer.render(scene, camera);
+  rafId = requestAnimationFrame(animate);
 }
 
 function destroy() {

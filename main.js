@@ -1,5 +1,4 @@
 import { initCharacterStage, setRendererQuality } from './character.js';
-import { initAudio, playSound } from './audio.js';
 
 const els = {
   pfpBtn: document.getElementById('pfpBtn'),
@@ -21,7 +20,6 @@ const defaultSettings = { music: true, sfx: true, quality: 'medium' };
 let settings = loadSettings();
 
 applySettingsUI(settings);
-initAudio(settings);
 const stage = initCharacterStage(document.getElementById('stageCanvas'), settings.quality);
 
 // Load user info if available
@@ -52,14 +50,12 @@ function openDrawer() {
   els.scrim.classList.add('open');
   els.drawer.setAttribute('aria-hidden', 'false');
   els.scrim.setAttribute('aria-hidden', 'false');
-  playSound('drawer_open');
 }
 function closeDrawer() {
   els.drawer.classList.remove('open');
   els.scrim.classList.remove('open');
   els.drawer.setAttribute('aria-hidden', 'true');
   els.scrim.setAttribute('aria-hidden', 'true');
-  playSound('drawer_close');
 }
 els.settingsBtn.addEventListener('click', openDrawer);
 els.drawerClose.addEventListener('click', closeDrawer);
@@ -69,28 +65,23 @@ els.scrim.addEventListener('click', closeDrawer);
 els.musicToggle.addEventListener('change', () => {
   settings.music = els.musicToggle.checked;
   persistSettings();
-  playSound('click');
 });
 els.sfxToggle.addEventListener('change', () => {
   settings.sfx = els.sfxToggle.checked;
   persistSettings();
-  playSound('click');
 });
 els.qualityTabs.forEach(btn => {
   btn.addEventListener('click', () => {
-    if (btn.classList.contains('active')) return;
     els.qualityTabs.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     settings.quality = btn.dataset.q;
     persistSettings();
     setRendererQuality(settings.quality);
-    playSound('click');
   });
 });
 
 // Play
 els.playBtn.addEventListener('click', () => {
-  playSound('click');
   // Placeholder action
   els.playBtn.style.opacity = '0.8';
   setTimeout(() => (els.playBtn.style.opacity = '1'), 160);
@@ -114,3 +105,4 @@ function applySettingsUI(s) {
   els.sfxToggle.checked = s.sfx;
   els.qualityTabs.forEach(b => b.classList.toggle('active', b.dataset.q === s.quality));
 }
+
