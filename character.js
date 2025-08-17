@@ -4,7 +4,7 @@ let renderer, scene, camera, rafId;
 let container;
 let characterGroup, body;
 let quality = 'medium';
-let armL, armR, legs;
+let armL, armR, legLGroup, legRGroup;
 
 export function initCharacterStage(canvas, initialQuality = 'medium') {
   container = canvas;
@@ -102,22 +102,31 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   armR.add(handR);
 
   // Legs & Feet
-  legs = new THREE.Group();
+  const legs = new THREE.Group();
   characterGroup.add(legs);
   const legGeom = new THREE.CapsuleGeometry(0.2, 0.5, 8, 16);
-  const legL = new THREE.Mesh(legGeom, bodyMat);
-  const legR = new THREE.Mesh(legGeom, bodyMat);
-  legL.position.set(-0.28, 0.35, 0);
-  legR.position.set(0.28, 0.35, 0);
-  legs.add(legL, legR);
-  
   const footGeom = new THREE.CapsuleGeometry(0.25, 0.2, 8, 16);
   footGeom.rotateX(Math.PI / 8);
+  
+  // Left Leg Group
+  legLGroup = new THREE.Group();
+  const legL = new THREE.Mesh(legGeom, bodyMat);
+  legL.position.y = legGeom.parameters.height / 2; // Position relative to group pivot
   const footL = new THREE.Mesh(footGeom, bodyMat);
+  footL.position.z = 0.05;
+  legLGroup.add(legL, footL);
+  legLGroup.position.set(-0.28, 0.1, 0); // Position group pivot at the 'hip'
+  legs.add(legLGroup);
+
+  // Right Leg Group
+  legRGroup = new THREE.Group();
+  const legR = new THREE.Mesh(legGeom, bodyMat);
+  legR.position.y = legGeom.parameters.height / 2;
   const footR = new THREE.Mesh(footGeom, bodyMat);
-  footL.position.set(-0.28, 0.1, 0.05);
-  footR.position.set(0.28, 0.1, 0.05);
-  legs.add(footL, footR);
+  footR.position.z = 0.05;
+  legRGroup.add(legR, footR);
+  legRGroup.position.set(0.28, 0.1, 0);
+  legs.add(legRGroup);
 
   // Lighting add-on
   const rim = new THREE.DirectionalLight(0xffffff, 0.25);
@@ -166,9 +175,10 @@ function animate(t = 0) {
   if (armL) armL.rotation.z = Math.PI / 4 + armSwing;
   if (armR) armR.rotation.z = -Math.PI / 4 - armSwing;
 
-  // Legs sway
-  const legSway = Math.sin(time * 1.5 + Math.PI / 4) * 0.1;
-  if (legs) legs.rotation.z = -legSway;
+  // Legs walk animation
+  const legSwing = Math.sin(time * 5.0) * 0.4;
+  if (legLGroup) legLGroup.rotation.x = legSwing;
+  if (legRGroup) legRGroup.rotation.x = -legSwing;
 
   // Subtle continuous spin
   characterGroup.rotation.y += 0.003;
