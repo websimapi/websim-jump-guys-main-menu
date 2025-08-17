@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BufferGeometryUtils } from 'three/addons/utils/BufferGeometryUtils.js';
 
 let renderer, scene, camera, rafId;
 let container;
@@ -157,38 +158,26 @@ export function initCharacterStage(canvas, initialQuality = 'medium') {
   const rightGeom = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p4, p5]), 20, eyeRadius, 8, false);
   
   function createEye() {
-    const eyeGroup = new THREE.Group();
-    
-    // The gradient material is intended for the whole eye.
-    // The previous individual materials (eyeLeftMat, etc.) were removed, causing an error.
-    // We will use the gradientEyeMaterial for all parts.
-    const eyeMat = gradientEyeMaterial || bodyMat; // Fallback to bodyMat if gradient material fails
+    const geometries = [];
 
     // Segments
-    const segL = new THREE.Mesh(leftGeom, eyeMat);
-    const segM = new THREE.Mesh(midGeom, eyeMat);
-    const segR = new THREE.Mesh(rightGeom, eyeMat);
-    eyeGroup.add(segL, segM, segR);
+    geometries.push(leftGeom.clone());
+    geometries.push(midGeom.clone());
+    geometries.push(rightGeom.clone());
     
-    // Rounded caps
-    const cap1 = new THREE.Mesh(sphereGeom, eyeMat);
-    cap1.position.copy(p1);
+    // Rounded caps, transformed into the same space
+    geometries.push(sphereGeom.clone().translate(p1.x, p1.y, p1.z));
+    geometries.push(sphereGeom.clone().translate(p2.x, p2.y, p2.z));
+    geometries.push(sphereGeom.clone().translate(p3.x, p3.y, p3.z));
+    geometries.push(sphereGeom.clone().translate(p4.x, p4.y, p4.z));
+    geometries.push(sphereGeom.clone().translate(p5.x, p5.y, p5.z));
     
-    const cap2 = new THREE.Mesh(sphereGeom, eyeMat);
-    cap2.position.copy(p2);
+    const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
     
-    const cap3 = new THREE.Mesh(sphereGeom, eyeMat);
-    cap3.position.copy(p3);
+    const eyeMat = gradientEyeMaterial || bodyMat;
+    const eyeMesh = new THREE.Mesh(mergedGeometry, eyeMat);
     
-    const cap4 = new THREE.Mesh(sphereGeom, eyeMat);
-    cap4.position.copy(p4);
-
-    const cap5 = new THREE.Mesh(sphereGeom, eyeMat);
-    cap5.position.copy(p5);
-    
-    eyeGroup.add(cap1, cap2, cap3, cap4, cap5);
-    
-    return eyeGroup;
+    return eyeMesh;
   }
 
   const eyeL = createEye();
