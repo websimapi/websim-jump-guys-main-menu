@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Jump Guys — Main Menu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <!-- Top Left: PFP + username -->
+    <button class="pfp" id="pfpBtn" aria-label="User Profile">
+      <img id="pfpImg" alt="User avatar" />
+      <div class="pfp-meta">
+        <div class="pfp-username" id="pfpUsername">@guest</div>
+        <div class="pfp-sub" id="pfpSub">Lvl 1 • 0 crowns</div>
+      </div>
+    </button>
+
+    <!-- Top Right: Settings -->
+    <button class="icon-btn settings-btn" id="settingsBtn" aria-label="Settings">
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+        <path d="M12 8.5a3.5 3.5 0 1 1 0 7.001A3.5 3.5 0 0 1 12 8.5Zm9.12 3.004c.08.327.08.665 0 .992l-1.058 3.97a1.75 1.75 0 0 1-2.344 1.23l-1.073-.448a7.77 7.77 0 0 1-1.55.9l-.206 1.154a1.75 1.75 0 0 1-1.726 1.447h-4.04a1.75 1.75 0 0 1-1.726-1.447l-.206-1.154a7.77 7.77 0 0 1-1.55-.9l-1.073.449a1.75 1.75 0 0 1-2.344-1.231l-1.058-3.97a1.75 1.75 0 0 1 1.06-2.051l1.01-.385a7.94 7.94 0 0 1 0-1.804l-1.01-.385a1.75 1.75 0 0 1-1.06-2.05L2.88 4.496A1.75 1.75 0 0 1 5.224 3.265l1.073.45c.48-.344.995-.641 1.54-.887l.206-1.154A1.75 1.75 0 0 1 9.769 0.227h4.04c.85 0 1.575.609 1.726 1.447l.206 1.154c.545.246 1.061.543 1.54.887l1.073-.45a1.75 1.75 0 0 1 2.344 1.231l1.058 3.97a1.75 1.75 0 0 1-1.06 2.05l-1.01.385c.053.3.08.602.08.904 0 .303-.027.605-.08.904l1.01.385c.49.187.87.59 1.06 1.096Z" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <!-- Center: Character Stage -->
+    <main class="stage">
+      <canvas id="stageCanvas" aria-label="Character showcase"></canvas>
+    </main>
+
+    <!-- Bottom Right: PLAY -->
+    <button class="play-btn" id="playBtn" aria-label="Play">PLAY</button>
+
+    <!-- Settings Drawer -->
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-header">
+        <h2>Settings</h2>
+        <button class="icon-btn" id="drawerClose" aria-label="Close settings">✕</button>
+      </div>
+      <div class="drawer-content">
+        <label class="row">
+          <span>Music</span>
+          <input type="checkbox" id="musicToggle">
+        </label>
+        <label class="row">
+          <span>SFX</span>
+          <input type="checkbox" id="sfxToggle">
+        </label>
+        <div class="row">
+          <span>Graphics</span>
+          <div class="segmented" role="tablist" aria-label="Graphics Quality">
+            <button role="tab" data-q="low">Low</button>
+            <button role="tab" data-q="medium" class="active">Medium</button>
+            <button role="tab" data-q="high">High</button>
+          </div>
+        </div>
+        <div class="hint">Settings are saved automatically.</div>
+      </div>
+    </aside>
+
+    <!-- Scrim -->
+    <div class="scrim" id="scrim" aria-hidden="true"></div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+

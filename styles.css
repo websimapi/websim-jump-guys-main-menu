@@ -1,0 +1,149 @@
+:root {
+  --bg: #fff;
+  --fg: #111;
+  --muted: #6b6b6b;
+  --ring: rgba(0,0,0,0.12);
+  --elev: rgba(0,0,0,0.06);
+  --btn-bg: #111;
+  --btn-fg: #fff;
+}
+
+* { box-sizing: border-box; }
+html, body, .app { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Noto Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Top-left PFP */
+.pfp {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.03);
+  border: 1px solid var(--ring);
+  border-radius: 14px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.pfp img {
+  width: 36px; height: 36px; border-radius: 50%;
+  object-fit: cover; background: #ddd;
+}
+.pfp-meta { display: flex; flex-direction: column; align-items: flex-start; }
+.pfp-username { font-weight: 700; line-height: 1; }
+.pfp-sub { font-size: 12px; color: var(--muted); line-height: 1.2; }
+
+/* Top-right settings */
+.icon-btn {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--ring);
+  border-radius: 12px;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg);
+  cursor: pointer;
+}
+.settings-btn {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+}
+
+/* Center stage */
+.stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 80px 16px 100px 16px; /* reserve space for corners/buttons */
+}
+.stage canvas {
+  width: min(720px, 100%);
+  height: min(60vh, 70vw);
+  max-height: 520px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--elev);
+  background: #f5f5f5;
+}
+
+/* Bottom-right PLAY */
+.play-btn {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border: none;
+  border-radius: 16px;
+  padding: 16px 26px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transform: translateZ(0);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 160ms ease;
+}
+.play-btn:active { transform: scale(0.98); box-shadow: 0 6px 14px rgba(0,0,0,0.18); }
+
+/* Drawer */
+.drawer {
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: min(420px, 88%);
+  background: var(--bg);
+  border-left: 1px solid var(--ring);
+  transform: translateX(100%);
+  transition: transform 180ms ease-in-out;
+  z-index: 20;
+  display: flex; flex-direction: column;
+}
+.drawer.open { transform: translateX(0); }
+.drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--ring);
+}
+.drawer-header h2 { margin: 0; font-size: 18px; }
+.drawer-content { padding: 12px 16px 24px; display: grid; gap: 14px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.segmented {
+  display: inline-flex; border: 1px solid var(--ring); border-radius: 10px; padding: 2px;
+  background: rgba(0,0,0,0.03);
+}
+.segmented button {
+  background: transparent; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  font-weight: 600; color: var(--muted);
+}
+.segmented button.active {
+  background: #111; color: #fff;
+}
+.hint { font-size: 12px; color: var(--muted); }
+
+/* Scrim */
+.scrim {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.25);
+  opacity: 0; pointer-events: none; transition: opacity 180ms ease;
+  z-index: 10;
+}
+.scrim.open { opacity: 1; pointer-events: auto; }
+
+/* Small tweaks */
+@media (hover: hover) and (pointer: fine) {
+  .pfp:hover, .icon-btn:hover { box-shadow: 0 4px 10px var(--elev); }
+}
+
